@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Simple Galaga Game</title>
+  <style>
+    body {
+      background: black;
+      color: white;
+      text-align: center;
+      font-family: Arial;
+    }
+    canvas {
+      background: black;
+      display: block;
+      margin: 0 auto;
+      border: 2px solid white;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Simple Galaga Game</h1>
+<p>Arrow keys to move • Space to shoot</p>
+
+<canvas id="gameCanvas" width="600" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+// ---------------- PLAYER ----------------
+const player = {
+  x: 300,
+  y: 550,
+  width: 40,
+  height: 40,
+  speed: 6
+};
+
+// ---------------- BULLET ----------------
+const bullet = {
+  x: 0,
+  y: 0,
+  width: 5,
+  height: 10,
+  speed: 8,
+  state: "ready"
+};
+
+// ---------------- ENEMIES ----------------
+const enemies = [];
+let enemySpeed = 2;
+
+for (let i = 0; i < 5; i++) {
+  enemies.push({
+    x: Math.random() * 500 + 50,
+    y: Math.random() * 150 + 50,
+    width: 40,
+    height: 30
+  });
+}
+
+// ---------------- INPUT ----------------
+const keys = {};
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
+
+// ---------------- FUNCTIONS ----------------
+function movePlayer() {
+  if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed;
+  if (keys["ArrowRight"] && player.x + player.width < canvas.width)
+    player.x += player.speed;
+}
+
+function fireBullet() {
+  if (keys[" "] && bullet.state === "ready") {
+    bullet.state = "fire";
+    bullet.x = player.x + player.width / 2 - bullet.width / 2;
+    bullet.y = player.y;
+  }
+}
+
+function moveBullet() {
+  if (bullet.state === "fire") {
+    bullet.y -= bullet.speed;
+    if (bullet.y < 0) bullet.state = "ready";
+  }
+}
+
+function moveEnemies() {
+  enemies.forEach(enemy => {
+    enemy.x += enemySpeed;
+
+    if (enemy.x <= 0 || enemy.x + enemy.width >= canvas.width) {
+      enemySpeed *= -1;
+      enemies.forEach(e => e.y += 30);
+    }
+  });
+}
+
+function isCollision(a, b) {
+  return (
+    a.x < b.x + b.width &&
+    a.x + a.width > b.x &&
+    a.y < b.y + b.height &&
+    a.y + a.height > b.y
+  );
+}
+
+function checkCollisions() {
+  enemies.forEach(enemy => {
+    if (bullet.state === "fire" && isCollision(bullet, enemy)) {
+      bullet.state = "ready";
+      enemy.x = Math.random() * 500 + 50;
+      enemy.y = Math.random() * 150 + 50;
+    }
+  });
+}
+
+// ---------------- DRAW ----------------
+function drawPlayer() {
+  ctx.fillStyle = "cyan";
+  ctx.fillRect(player.x, player.y, player.width, player.height);
+}
+
+function drawBullet() {
+  if (bullet.state === "fire") {
+    ctx.fillStyle = "pink";
+    ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+  }
+}
+
+function drawEnemies() {
+  ctx.fillStyle = "blue";
+  enemies.forEach(enemy => {
+    ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+  });
+}
+
+// ---------------- GAME LOOP ----------------
+function gameLoop() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  movePlayer();
+  fireBullet();
+  moveBullet();
+  moveEnemies();
+  checkCollisions();
+
+  drawPlayer();
+  drawBullet();
+  drawEnemies();
+
+  requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+
+</body>
+</html>
